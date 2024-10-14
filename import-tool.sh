@@ -1,33 +1,35 @@
 #! /bin/bash
 
 # essential utils from path.sh
-is_url_path() {
-  [[ $1 =~ ^https?:// ]]
-}
+if [[ -z "$IS_PATH_LOADED" ]]; then
+  is_url_path() {
+    [[ $1 =~ ^https?:// ]]
+  }
 
-is_absolute_path() {
-  is_url_path "$1" || [[ $1 == /* ]]
-}
+  is_absolute_path() {
+    is_url_path "$1" || [[ $1 == /* ]]
+  }
 
-resolve_path() {
-  local CURRENT_IFS="$IFS"
-  IFS="/"
-  local path="${*}"
-  IFS="$CURRENT_IFS"
-  if [[ "$path" == /* ]]; then
-    echo "$path"
-  elif is_url_path "$path"; then
-    echo "$path"
-  else
-    echo "$(cd "$(dirname "$path")" && pwd)/$(basename "$path")"
-  fi
-}
+  resolve_path() {
+    local CURRENT_IFS="$IFS"
+    IFS="/"
+    local path="${*}"
+    IFS="$CURRENT_IFS"
+    if [[ "$path" == /* ]]; then
+      echo "$path"
+    elif is_url_path "$path"; then
+      echo "$path"
+    else
+      echo "$(cd "$(dirname "$path")" && pwd)/$(basename "$path")"
+    fi
+  }
 
-get_path_dir() {
-  dirname "$(resolve_path "$1")"
-}
+  get_path_dir() {
+    dirname "$(resolve_path "$1")"
+  }
 
-SCRIPT_PATH="$(echo "$(cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd)"/"$(basename "${BASH_SOURCE[-1]}")")"
+  SCRIPT_PATH="$(echo "$(cd "$(dirname "${BASH_SOURCE[-1]}")" && pwd)"/"$(basename "${BASH_SOURCE[-1]}")")"
+fi
 # end of essential utils from path.sh
 
 # ###############
