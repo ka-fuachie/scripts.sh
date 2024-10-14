@@ -136,7 +136,7 @@ load_module() {
 import_module() {
   local module_import_path="$1"
   local module_local_import_path="$2"
-  if [[ -z "$module_import_path" ]]; then
+  if [[ -z "$module_local_import_path" ]]; then
     module_local_import_path="$module_import_path"
   fi
 
