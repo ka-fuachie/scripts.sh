@@ -49,6 +49,7 @@ fi
 if [[ -z "$IS_IMPORT_TOOL_LOADED" ]]; then
   IS_IMPORT_TOOL_LOADED=1
   IMPORTED_PATHS=()
+  IMPORTING_PATHS=()
   IMPORT_PATH="$SCRIPT_PATH"
   MODULE_IMPORT_BASE_PATH="$HOME/.import-tool-modules"
   declare -A MODULE_IMPORT_NAMESPACES
@@ -140,9 +141,26 @@ import_module() {
     module_local_import_path="$module_import_path"
   fi
 
+  for path in "${IMPORTED_PATHS[@]}"; do
+    if [[ "$path" == "$module_import_path" ]]; then
+      return
+    fi
+  done
+
+  for path in "${IMPORTING_PATHS[@]}"; do
+    if [[ "$path" == "$module_import_path" ]]; then
+      echo "Circular import detected for ${module_import_path}" 1>&2
+      echo "Importing paths:" 1>&2
+      for path in "${IMPORTING_PATHS[@]}"; do
+        echo "  $path" 1>&2
+      done
+      exit 1
+    fi
+  done
+
   local current_import_path="$IMPORT_PATH"
   IMPORT_PATH="$module_import_path"
-  IMPORTED_PATHS+=($module_import_path)
+  IMPORTING_PATHS+=("$module_import_path")
   source "$module_local_import_path"
 
   if [[ "$?" -ne 0 ]]; then
@@ -150,6 +168,8 @@ import_module() {
     exit 1
   fi
 
+  IMPORTING_PATHS=( "${IMPORTING_PATHS[@]/$module_import_path}" )
+  IMPORTED_PATHS+=($module_import_path)
   IMPORT_PATH="$current_import_path"
 }
 
@@ -157,12 +177,6 @@ import() {
   local import_path="$1"
   resolved_import_path="$(resolve_module_path "$import_path")"
   assert_exists "$resolved_import_path"
-
-  for path in "${IMPORTED_PATHS[@]}"; do
-    if [[ "$path" == "$resolved_import_path" ]]; then
-      return
-    fi
-  done
 
   if is_url_path "$resolved_import_path"; then
     local module_local_import_path="$(get_module_local_import_path "$resolved_import_path")"
